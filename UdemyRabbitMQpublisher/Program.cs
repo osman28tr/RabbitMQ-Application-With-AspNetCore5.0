@@ -1,5 +1,6 @@
 ﻿using RabbitMQ.Client;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace UdemyRabbitMQpublisher
@@ -17,13 +18,16 @@ namespace UdemyRabbitMQpublisher
 
             channel.QueueDeclare("hello-queue", true/*kuyruk sadece memory'de tutulur ise false yapılır yoksa */, false/*publisher ve subscriber farklı kanallar üzerinden haberleşeceği için aynı kanal olmadığından false yapılır.*/, false/*subscriber silinir ise kuyruk da silinmesini istiyorsak true yapılır.*/); //kuyruk oluşturuldu.
 
-            string message = "hello world";
+            Enumerable.Range(1, 50).ToList().ForEach(x =>
+            {
+                string message = $"Message {x}";
 
-            var messageBody = Encoding.UTF8.GetBytes(message); //mesajı bytelar halinde göndermek avantajlı olacağından(pdf,word,excel vs.) byte ile gönderdik.
+                var messageBody = Encoding.UTF8.GetBytes(message); //mesajı bytelar halinde göndermek avantajlı olacağından(pdf,word,excel vs.) byte ile gönderdik.
 
-            channel.BasicPublish(string.Empty/*bir exchange yapısı kullanılmadığı zaman varsayılan olarak default exchange olarak adlandırılır.*/, "hello-queue"/*kuyruk ismi ile aynı olmalı*/, null, messageBody);
+                channel.BasicPublish(string.Empty/*bir exchange yapısı kullanılmadığı zaman varsayılan olarak default exchange olarak adlandırılır.*/, "hello-queue"/*kuyruk ismi ile aynı olmalı*/, null, messageBody);
 
-            Console.WriteLine("Mesaj gönderilmiştir.");
+                Console.WriteLine($"Mesaj gönderilmiştir : {message}");
+            });
 
             Console.ReadLine();
         }
