@@ -16,15 +16,18 @@ namespace UdemyRabbitMQpublisher
 
             var channel = connection.CreateModel(); //RabbitMQ ile haberleşmek için bir kanal oluşturuldu.
 
-            channel.QueueDeclare("hello-queue", true/*kuyruk sadece memory'de tutulur ise false yapılır yoksa */, false/*publisher ve subscriber farklı kanallar üzerinden haberleşeceği için aynı kanal olmadığından false yapılır.*/, false/*subscriber silinir ise kuyruk da silinmesini istiyorsak true yapılır.*/); //kuyruk oluşturuldu.
+            channel.ExchangeDeclare("logs-fanout", durable: true, type: ExchangeType.Fanout);
+
+
+            //channel.QueueDeclare("hello-queue", true/*kuyruk sadece memory'de tutulur ise false yapılır yoksa */, false/*publisher ve subscriber farklı kanallar üzerinden haberleşeceği için aynı kanal olmadığından false yapılır.*/, false/*subscriber silinir ise kuyruk da silinmesini istiyorsak true yapılır.*/); //kuyruk oluşturuldu.
 
             Enumerable.Range(1, 50).ToList().ForEach(x =>
             {
-                string message = $"Message {x}";
+                string message = $"log {x}";
 
                 var messageBody = Encoding.UTF8.GetBytes(message); //mesajı bytelar halinde göndermek avantajlı olacağından(pdf,word,excel vs.) byte ile gönderdik.
 
-                channel.BasicPublish(string.Empty/*bir exchange yapısı kullanılmadığı zaman varsayılan olarak default exchange olarak adlandırılır.*/, "hello-queue"/*kuyruk ismi ile aynı olmalı*/, null, messageBody);
+                channel.BasicPublish("logs-fanout"/*bir exchange yapısı kullanılmadığı zaman varsayılan olarak default exchange olarak adlandırılır.*/, ""/*kuyruk ismi ile aynı olmalı*/, null, messageBody);
 
                 Console.WriteLine($"Mesaj gönderilmiştir : {message}");
             });
