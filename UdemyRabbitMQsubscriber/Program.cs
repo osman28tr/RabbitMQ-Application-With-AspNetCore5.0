@@ -1,6 +1,7 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.IO;
 using System.Text;
 using System.Threading;
 
@@ -19,18 +20,20 @@ namespace UdemyRabbitMQsubscriber
 
             //channel.ExchangeDeclare("logs-fanout", durable: true, type: ExchangeType.Fanout);
 
-            var randomQueueName = channel.QueueDeclare().QueueName; //her subscriber'ın farklı kuyruk ismi olması açısından random bi kuyruk ismi verildi.
+            /*var randomQueueName = channel.QueueDeclare().QueueName;*/ //her subscriber'ın farklı kuyruk ismi olması açısından random bi kuyruk ismi verildi.
 
             //channel.QueueDeclare(randomQueueName, true, false, false);//kuyruk subscriber down olursa silinmesin.
 
-            channel.QueueBind(randomQueueName,"logs-fanout","",null);//declare edilmedi bind edildi. yani subscriber down olursa kuyruk da silinir. Declare edilirse ilgili subscriber down olursa kuyruk silinmez durur.
+           /* channel.QueueBind(randomQueueName,"logs-fanout","",null);*///declare edilmedi bind edildi. yani subscriber down olursa kuyruk da silinir. Declare edilirse ilgili subscriber down olursa kuyruk silinmez durur.
 
 
             channel.BasicQos(0, 1, false/*true olur ise toplamda 2. parametredeki değer kadar olacak şekilde aynı anda bütün subscriberlar'a gönderir fakat false olur ise tek seferde bütün subscriberlar'a 2. parametredeki değer kadar mesajları gönderir.*/);
 
             var consumer = new EventingBasicConsumer(channel); //subscriber oluşturuldu.
 
-            channel.BasicConsume(randomQueueName, false/*subscriber tarafında kuyrukdaki mesaj ulaştı ise bu mesajın direk silinmesini istiyorsak true yaparız. normalde mesajın doğru işlenmeme durumu olduğundan false yapılır.*/, consumer);
+            var queueName = "direct-queue-Critical";
+
+            channel.BasicConsume(queueName, false/*subscriber tarafında kuyrukdaki mesaj ulaştı ise bu mesajın direk silinmesini istiyorsak true yaparız. normalde mesajın doğru işlenmeme durumu olduğundan false yapılır.*/, consumer);
 
             Console.WriteLine("Loglar dinleniyor...");
 
@@ -42,8 +45,12 @@ namespace UdemyRabbitMQsubscriber
 
                 Console.WriteLine("Gelen Mesaj: " + message);
 
+                File.AppendAllText("log-critical.txt", message + "\n");
+
                 channel.BasicAck(e.DeliveryTag, false); //rabbitmq ilgili mesajın durumundan haberdar edildi.
             };
+
+            channel.BasicConsume(queueName, false, consumer);
 
             Console.ReadLine();
         }
